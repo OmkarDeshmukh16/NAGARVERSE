@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import {
-  Search, SlidersHorizontal, List, Map, Utensils, Hotel, Landmark,
-  Coffee, ShoppingBag, TreePine, Hospital, Bus, X, Star, MapPin,
-  Navigation, Clock, Phone, Globe, Heart, Share2, ChevronRight, Loader2, Filter
+  Search, List, Map, Utensils, Hotel, Landmark,
+  Coffee, ShoppingBag, TreePine, Hospital, Bus, MapPin, X
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
@@ -34,7 +33,7 @@ const sortOptions = [
 ]
 
 export default function Explore() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const [activeCategory, setActiveCategory] = useState(searchParams.get('cat') || 'all')
   const [sortBy, setSortBy] = useState('relevance')
   const [viewMode, setViewMode] = useState<'split' | 'list' | 'map'>('split')
@@ -42,7 +41,6 @@ export default function Explore() {
   const [inputQuery, setInputQuery] = useState(query)
   const [selectedPlace, setSelectedPlace] = useState<any>(null)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])

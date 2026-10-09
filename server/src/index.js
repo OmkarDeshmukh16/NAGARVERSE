@@ -85,8 +85,10 @@ io.on('connection', socket => {
 
 // ── Start ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000
-httpServer.listen(PORT, () => {
-  console.log(`🚀 NAGARVERSE server running on port ${PORT}`)
-})
+if (process.env.NODE_ENV !== 'test') {
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 NAGARVERSE server running on port ${PORT}`)
+  })
+}
 
 module.exports = app

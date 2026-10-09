@@ -81,36 +81,83 @@ const CURATED_ITINERARIES = [
   },
 ]
 
-// GET /api/itineraries
-router.get('/', async (req, res) => {
+const jwt = require('jsonwebtoken')
+const JWT_SECRET = process.env.JWT_SECRET || 'nagarverse_secret_key_change_in_prod'
+
+function optionalAuth(req, res, next) {
+  const token = req.header('Authorization')?.replace('Bearer ', '')
+  if (!token) return next()
   try {
+    req.user = jwt.verify(token, JWT_SECRET)
+  } catch {}
+  next()
+}
+
+// GET /api/itineraries
+router.get('/', optionalAuth, async (req, res) => {
+  try {
+    const { mine } = req.query
     let itineraries = []
-    try {
-      itineraries = await Itinerary.find().sort({ createdAt: -1 }).limit(20)
-    } catch {
-      // DB offline
+
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const query = {}
+        if (mine === 'true') {
+          if (!req.user?.id) return res.status(401).json({ error: 'Authentication required for user itineraries' })
+          query.user = req.user.id
+        }
+        itineraries = await Itinerary.find(query).sort({ createdAt: -1 }).limit(20).lean()
+      } catch {
+        // Fallback
+      }
     }
 
     if (!itineraries || itineraries.length === 0) {
-      itineraries = CURATED_ITINERARIES
+      if (mine === 'true') {
+        itineraries = []
+      } else {
+        itineraries = CURATED_ITINERARIES.map(it => ({ ...it, isDemo: true }))
+      }
     }
 
     res.json({
       success: true,
       itineraries,
+      isDemo: itineraries.some(i => i.isDemo),
     })
   } catch (error) {
-    res.status(500).json({ error: error.message, itineraries: CURATED_ITINERARIES })
+    res.status(500).json({ error: error.message, itineraries: CURATED_ITINERARIES.map(it => ({ ...it, isDemo: true })) })
+  }
+})
+
+// GET /api/itineraries/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const curated = CURATED_ITINERARIES.find(i => i._id === id)
+    if (curated) return res.json({ success: true, itinerary: { ...curated, isDemo: true } })
+
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1 && mongoose.isValidObjectId(id)) {
+      const it = await Itinerary.findById(id).lean()
+      if (it) return res.json({ success: true, itinerary: it })
+    }
+
+    res.status(404).json({ error: 'Itinerary not found' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
 })
 
 // POST /api/itineraries
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { title, summary, city = 'Pune', stops = [], form, notes } = req.body
 
     const newItinerary = {
       _id: 'itin-' + Date.now(),
+      user: req.user?.id,
       title: title || 'Custom Pune Plan',
       summary: summary || 'Personalized AI Generated Itinerary',
       city,
@@ -118,20 +165,24 @@ router.post('/', async (req, res) => {
       form,
       notes,
       createdAt: new Date().toISOString(),
+      isDemo: false,
     }
 
-    try {
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1) {
       const doc = new Itinerary({
+        user: req.user?.id,
         title: newItinerary.title,
         summary: newItinerary.summary,
         city: newItinerary.city,
         stops: newItinerary.stops,
         form: newItinerary.form,
+        notes: newItinerary.notes,
       })
       await doc.save()
       newItinerary._id = doc._id
-    } catch {
-      CURATED_ITINERARIES.unshift(newItinerary)
+    } else {
+      CURATED_ITINERARIES.unshift({ ...newItinerary, isDemo: true })
     }
 
     res.status(201).json({
@@ -144,19 +195,34 @@ router.post('/', async (req, res) => {
   }
 })
 
-// DELETE /api/itineraries/:id
-router.delete('/:id', async (req, res) => {
+// DELETE /api/itineraries/:id (Protected with auth)
+router.delete('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params
-    try {
-      await Itinerary.findByIdAndDelete(id)
-    } catch {
-      // In memory fallback
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1 && mongoose.isValidObjectId(id)) {
+      const existing = await Itinerary.findById(id)
+      if (existing) {
+        if (existing.user && existing.user.toString() !== req.user.id) {
+          return res.status(403).json({ error: 'Unauthorized to delete this itinerary' })
+        }
+        await Itinerary.findByIdAndDelete(id)
+        return res.json({ success: true, message: 'Itinerary deleted' })
+      }
     }
-    res.json({ success: true, message: 'Itinerary deleted' })
+
+    // In-memory fallback removal
+    const idx = CURATED_ITINERARIES.findIndex(i => i._id === id)
+    if (idx !== -1) {
+      CURATED_ITINERARIES.splice(idx, 1)
+      return res.json({ success: true, message: 'Itinerary deleted from demo session' })
+    }
+
+    res.json({ success: true, message: 'Itinerary removed' })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
 module.exports = router
+

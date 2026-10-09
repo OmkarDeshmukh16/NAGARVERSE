@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import {
   Shield, AlertTriangle, Clock, Filter, MapPin, CheckCircle,
-  XCircle, AlertCircle, Phone, Navigation, ChevronDown, Plus, Info
+  XCircle, AlertCircle, Phone, Navigation, Info
 } from 'lucide-react'
 import SafeRoutePanel from '../components/safety/SafeRoutePanel'
 import ReportIncident from '../components/safety/ReportIncident'
@@ -93,6 +93,46 @@ export default function Safety() {
       new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(mapRef.current!)
     })
   }, [incidents])
+
+  const handleSelectRoute = (route: any) => {
+    const map = mapRef.current
+    if (!map || !route?.coordinates || route.coordinates.length < 2) return
+
+    try {
+      if (map.getLayer('safe-route-line')) map.removeLayer('safe-route-line')
+      if (map.getSource('safe-route-line')) map.removeSource('safe-route-line')
+
+      map.addSource('safe-route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: route.coordinates,
+          },
+        },
+      })
+
+      map.addLayer({
+        id: 'safe-route-line',
+        type: 'line',
+        source: 'safe-route-line',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': route.color || '#10b981',
+          'line-width': 6,
+          'line-opacity': 0.9,
+        },
+      })
+
+      const bounds = new maplibregl.LngLatBounds(route.coordinates[0], route.coordinates[0])
+      route.coordinates.forEach((coord: [number, number]) => bounds.extend(coord))
+      map.fitBounds(bounds, { padding: 80, duration: 900 })
+    } catch (e) {
+      console.warn('Could not draw route line:', e)
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen pt-16">
@@ -241,12 +281,12 @@ export default function Safety() {
             </div>
           )}
 
-          {activeTab === 'routes' && <SafeRoutePanel map={mapRef.current} />}
+          {activeTab === 'routes' && <SafeRoutePanel onSelectRoute={handleSelectRoute} />}
           {activeTab === 'report' && <ReportIncident />}
         </div>
 
         {/* Map */}
-        {activeTab === 'map' && (
+        {activeTab !== 'report' && (
           <div className="flex-1 relative">
             <div ref={mapContainerRef} className="w-full h-full" />
 

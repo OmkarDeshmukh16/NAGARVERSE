@@ -18,7 +18,7 @@ export default function Profile() {
 
   const { data: itineraries = [] } = useQuery({
     queryKey: ['my-itineraries'],
-    queryFn: () => axios.get('/api/itineraries').then(r => r.data.itineraries || []),
+    queryFn: () => axios.get('/api/itineraries?mine=true').then(r => r.data.itineraries || []),
     enabled: !!user,
   })
 

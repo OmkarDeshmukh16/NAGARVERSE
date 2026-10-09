@@ -28,6 +28,8 @@ const incidentSchema = new mongoose.Schema({
   audioUrl: String,
   aiSummary: String,
   city: { type: String, default: 'Pune' },
+  upvotes: { type: Number, default: 1 },
+  isDemo: { type: Boolean, default: false },
 }, { timestamps: true })
 
 incidentSchema.index({ location: '2dsphere' })

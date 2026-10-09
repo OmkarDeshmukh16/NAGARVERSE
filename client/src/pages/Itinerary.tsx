@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Route, MapPin, Clock, DollarSign, Users, Plus, Minus, Wand2, Save, Share2, Loader2 } from 'lucide-react'
+import { Route, MapPin, Clock, DollarSign, Plus, Minus, Wand2, Save, Share2, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'

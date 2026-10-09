@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Float, MeshDistortMaterial, Sphere, Box, Cylinder, Torus, Stars, Cloud, Billboard, Text } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Float, Sphere, Box, Cylinder, Torus, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Building component
@@ -120,19 +120,20 @@ function CityIsland() {
   )
 }
 
+// Precomputed ambient particle positions
+const PARTICLE_COUNT = 60
+const PRECOMPUTED_PARTICLES = new Float32Array(PARTICLE_COUNT * 3)
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  // Deterministic spread
+  const angle = (i / PARTICLE_COUNT) * Math.PI * 2
+  const r = 1.5 + (i % 5) * 0.4
+  PRECOMPUTED_PARTICLES[i * 3] = Math.cos(angle) * r
+  PRECOMPUTED_PARTICLES[i * 3 + 1] = ((i % 7) - 3) * 0.5
+  PRECOMPUTED_PARTICLES[i * 3 + 2] = Math.sin(angle) * r
+}
+
 // Ambient particles
 function Particles() {
-  const count = 60
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3)
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 6
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 4
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 6
-    }
-    return arr
-  }, [])
-
   const ref = useRef<THREE.Points>(null!)
   useFrame(({ clock }) => {
     if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.03
@@ -141,7 +142,7 @@ function Particles() {
   return (
     <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-position" args={[PRECOMPUTED_PARTICLES, 3]} />
       </bufferGeometry>
       <pointsMaterial size={0.02} color="#00d4ff" transparent opacity={0.5} />
     </points>

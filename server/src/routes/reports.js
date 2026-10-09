@@ -69,46 +69,91 @@ const COMMUNITY_REPORTS = [
   },
 ]
 
-// GET /api/reports
-router.get('/', async (req, res) => {
+const jwt = require('jsonwebtoken')
+const JWT_SECRET = process.env.JWT_SECRET || 'nagarverse_secret_key_change_in_prod'
+
+function optionalAuth(req, res, next) {
+  const token = req.header('Authorization')?.replace('Bearer ', '')
+  if (!token) return next()
   try {
-    const { status, category, limit = 50 } = req.query
+    req.user = jwt.verify(token, JWT_SECRET)
+  } catch {}
+  next()
+}
+
+// GET /api/reports
+router.get('/', optionalAuth, async (req, res) => {
+  try {
+    const { status, category, limit = 50, mine } = req.query
     const filter = {}
     if (status && status !== 'all') filter.verificationStatus = status
     if (category && category !== 'all') filter.category = category
 
+    if (mine === 'true') {
+      if (!req.user?.id) return res.status(401).json({ error: 'Authentication required for user reports' })
+      filter.reportedBy = req.user.id
+    }
+
     let reports = []
-    try {
-      reports = await Incident.find(filter)
-        .populate('reportedBy', 'name email')
-        .sort({ createdAt: -1 })
-        .limit(Number(limit))
-    } catch {
-      // DB offline
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1) {
+      try {
+        reports = await Incident.find(filter)
+          .populate('reportedBy', 'name email')
+          .sort({ createdAt: -1 })
+          .limit(Number(limit))
+          .lean()
+      } catch {
+        // DB offline
+      }
     }
 
     if (!reports || reports.length === 0) {
-      reports = COMMUNITY_REPORTS.filter(r => {
-        if (status && status !== 'all' && r.verificationStatus !== status) return false
-        if (category && category !== 'all' && r.category !== category) return false
-        return true
-      })
+      if (mine === 'true') {
+        reports = []
+      } else {
+        reports = COMMUNITY_REPORTS.filter(r => {
+          if (status && status !== 'all' && r.verificationStatus !== status) return false
+          if (category && category !== 'all' && r.category !== category) return false
+          return true
+        }).map(r => ({ ...r, isDemo: true }))
+      }
     }
 
     res.json({
       success: true,
       count: reports.length,
       reports,
+      isDemo: reports.some(r => r.isDemo),
     })
   } catch (error) {
-    res.status(500).json({ error: error.message, reports: COMMUNITY_REPORTS })
+    res.status(500).json({ error: error.message, reports: COMMUNITY_REPORTS.map(r => ({ ...r, isDemo: true })) })
+  }
+})
+
+// GET /api/reports/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const demo = COMMUNITY_REPORTS.find(r => r._id === id)
+    if (demo) return res.json({ success: true, report: { ...demo, isDemo: true } })
+
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1 && mongoose.isValidObjectId(id)) {
+      const incident = await Incident.findById(id).populate('reportedBy', 'name email').lean()
+      if (incident) return res.json({ success: true, report: incident })
+    }
+
+    res.status(404).json({ error: 'Report not found' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
 })
 
 // POST /api/reports
-router.post('/', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos', maxCount: 5 }]), async (req, res) => {
+router.post('/', optionalAuth, upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos', maxCount: 5 }]), async (req, res) => {
   try {
-    const { category, severity, description, location, anonymous, locationName } = req.body
+    const { category, severity, description, location, anonymous, locationName, lng, lat } = req.body
 
     if (!description && !req.files?.audio) {
       return res.status(400).json({ error: 'Description or voice note is required' })
@@ -116,6 +161,27 @@ router.post('/', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos'
 
     const isAnon = anonymous === 'true' || anonymous === true
     const locName = locationName || location || 'Pune City'
+
+    // Parse coordinates or fallback to Pune center
+    let coords = [73.8567, 18.5204]
+    if (lng && lat && !isNaN(parseFloat(lng)) && !isNaN(parseFloat(lat))) {
+      coords = [parseFloat(lng), parseFloat(lat)]
+    }
+
+    // Convert uploaded photos to data URLs for persistent demonstration in DB
+    const photos = []
+    if (req.files?.photos) {
+      req.files.photos.forEach(file => {
+        const base64 = file.buffer.toString('base64')
+        photos.push(`data:${file.mimetype};base64,${base64}`)
+      })
+    }
+
+    let audioUrl = undefined
+    if (req.files?.audio?.[0]) {
+      const audioFile = req.files.audio[0]
+      audioUrl = `data:${audioFile.mimetype};base64,${audioFile.buffer.toString('base64')}`
+    }
 
     const newReport = {
       _id: 'rep-' + Date.now(),
@@ -125,16 +191,21 @@ router.post('/', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos'
       locationName: locName,
       location: {
         type: 'Point',
-        coordinates: [73.8567 + (Math.random() - 0.5) * 0.05, 18.5204 + (Math.random() - 0.5) * 0.05],
+        coordinates: coords,
       },
       verificationStatus: 'submitted',
       isAnonymous: isAnon,
+      reportedBy: !isAnon && req.user?.id ? req.user.id : undefined,
+      photos,
+      audioUrl,
       upvotes: 1,
       createdAt: new Date().toISOString(),
       aiSummary: `Citizen incident filed under ${category || 'general'}. Auto-assigned for verification.`,
+      isDemo: false,
     }
 
-    try {
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1) {
       const incidentDoc = new Incident({
         category: newReport.category,
         severity: newReport.severity,
@@ -142,13 +213,16 @@ router.post('/', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos'
         locationName: newReport.locationName,
         location: newReport.location,
         isAnonymous: newReport.isAnonymous,
+        reportedBy: newReport.reportedBy,
+        photos: newReport.photos,
+        audioUrl: newReport.audioUrl,
+        upvotes: 1,
         verificationStatus: 'submitted',
       })
       await incidentDoc.save()
       newReport._id = incidentDoc._id
-    } catch {
-      // In-memory push fallback
-      COMMUNITY_REPORTS.unshift(newReport)
+    } else {
+      COMMUNITY_REPORTS.unshift({ ...newReport, isDemo: true })
     }
 
     res.status(201).json({
@@ -161,15 +235,53 @@ router.post('/', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'photos'
   }
 })
 
+// PATCH /api/reports/:id/status
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+    if (!['submitted', 'under_review', 'verified', 'rejected', 'resolved'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid verification status' })
+    }
+
+    const mongoose = require('mongoose')
+    if (mongoose.connection.readyState === 1 && mongoose.isValidObjectId(id)) {
+      const updated = await Incident.findByIdAndUpdate(id, { verificationStatus: status }, { new: true })
+      if (updated) return res.json({ success: true, report: updated })
+    }
+
+    const demo = COMMUNITY_REPORTS.find(r => r._id === id)
+    if (demo) {
+      demo.verificationStatus = status
+      return res.json({ success: true, report: demo })
+    }
+
+    res.status(404).json({ error: 'Report not found' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 // POST /api/reports/:id/vote
 router.post('/:id/vote', async (req, res) => {
   const { id } = req.params
+  const mongoose = require('mongoose')
+
+  if (mongoose.connection.readyState === 1 && mongoose.isValidObjectId(id)) {
+    try {
+      const updated = await Incident.findByIdAndUpdate(id, { $inc: { upvotes: 1 } }, { new: true })
+      if (updated) return res.json({ success: true, upvotes: updated.upvotes })
+    } catch {}
+  }
+
   const report = COMMUNITY_REPORTS.find(r => r._id === id)
   if (report) {
     report.upvotes = (report.upvotes || 0) + 1
     return res.json({ success: true, upvotes: report.upvotes })
   }
-  res.json({ success: true, upvotes: 10 })
+
+  res.json({ success: true, upvotes: 1 })
 })
 
 module.exports = router
+

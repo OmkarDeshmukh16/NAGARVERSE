@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     budgetRange: { type: String, default: 'moderate' },
     accessibility: { type: Boolean, default: false },
   },
-  savedPlaces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Place' }],
+  savedPlaces: [{ type: String }],
 }, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema)

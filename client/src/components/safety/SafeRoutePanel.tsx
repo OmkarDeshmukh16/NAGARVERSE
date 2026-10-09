@@ -1,14 +1,19 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Navigation, MapPin, AlertTriangle, Info, Loader2 } from 'lucide-react'
+import { Navigation, MapPin, Info, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-export default function SafeRoutePanel({ map }: { map: any }) {
+interface Props {
+  onSelectRoute?: (route: any) => void
+}
+
+export default function SafeRoutePanel({ onSelectRoute }: Props) {
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
   const [loading, setLoading] = useState(false)
   const [routes, setRoutes] = useState<any[]>([])
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0)
 
   const handleGetRoutes = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,7 +21,12 @@ export default function SafeRoutePanel({ map }: { map: any }) {
     setLoading(true)
     try {
       const res = await axios.post('/api/safety/routes', { origin, destination })
-      setRoutes(res.data.routes || [])
+      const fetchedRoutes = res.data.routes || []
+      setRoutes(fetchedRoutes)
+      if (fetchedRoutes.length > 0) {
+        setSelectedRouteIndex(0)
+        onSelectRoute?.(fetchedRoutes[0])
+      }
     } catch {
       toast.error('Could not fetch routes. Try again.')
     } finally {
@@ -83,8 +93,14 @@ export default function SafeRoutePanel({ map }: { map: any }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`p-3 rounded-xl border transition-all ${
-                  i === 0 ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-white/5'
+                onClick={() => {
+                  setSelectedRouteIndex(i)
+                  onSelectRoute?.(route)
+                }}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  selectedRouteIndex === i
+                    ? 'border-emerald-500/40 bg-emerald-500/10 shadow-lg shadow-emerald-500/5'
+                    : 'border-white/5 hover:border-white/15'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">

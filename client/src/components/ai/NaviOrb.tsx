@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Mic, MicOff, MessageCircle, Sparkles, MapPin, ArrowUpRight } from 'lucide-react'
+import { X, Send, Mic, MicOff, Sparkles, MapPin, ArrowUpRight } from 'lucide-react'
 import { useNavi } from '../../contexts/NaviContext'
-import ReactMarkdown from 'react-markdown'
 
 // Simple markdown renderer without the package
 function SimpleMarkdown({ text }: { text: string }) {

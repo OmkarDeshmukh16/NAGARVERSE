@@ -120,6 +120,7 @@ router.post('/routes', async (req, res) => {
     // Dynamic intelligent route generation based on Pune topology & safety heuristic
     const routes = [
       {
+        id: 'route-1',
         name: 'Safe-Shield Verified Corridor',
         distance: '7.4 km',
         duration: '22 mins',
@@ -128,8 +129,16 @@ router.post('/routes', async (req, res) => {
         reason: 'Optimal route via arterial main roads (FC Road - Ganeshkhind Road) with high pedestrian footfall, 98% operational lighting, and active police checkpoints.',
         features: ['Full Street Lighting', 'CCTV Covered', 'Active Police Patrol', 'Wide Footpaths'],
         color: '#10b981',
+        coordinates: [
+          [73.8407, 18.5204],
+          [73.8445, 18.5245],
+          [73.8485, 18.5290],
+          [73.8525, 18.5330],
+          [73.8567, 18.5380],
+        ],
       },
       {
+        id: 'route-2',
         name: 'Express Direct Route',
         distance: '6.1 km',
         duration: '17 mins',
@@ -138,8 +147,16 @@ router.post('/routes', async (req, res) => {
         reason: 'Shortest driving path via inner connecting lanes. 2 reported road hazard incidents and dimmer lighting reported past 10 PM.',
         features: ['Shortest Distance', 'Medium Traffic', 'Variable Street Lighting'],
         color: '#f59e0b',
+        coordinates: [
+          [73.8407, 18.5204],
+          [73.8450, 18.5190],
+          [73.8510, 18.5230],
+          [73.8550, 18.5290],
+          [73.8567, 18.5380],
+        ],
       },
       {
+        id: 'route-3',
         name: 'Transit & Metro Parallel Route',
         distance: '8.2 km',
         duration: '26 mins',
@@ -148,6 +165,13 @@ router.post('/routes', async (req, res) => {
         reason: 'Follows Pune Metro Line corridor with high public activity, station emergency booths, and 24/7 security presence.',
         features: ['Metro Station Support', '24/7 Well-Lit', 'High Footfall'],
         color: '#3b82f6',
+        coordinates: [
+          [73.8407, 18.5204],
+          [73.8360, 18.5215],
+          [73.8330, 18.5280],
+          [73.8410, 18.5350],
+          [73.8567, 18.5380],
+        ],
       },
     ]
 
