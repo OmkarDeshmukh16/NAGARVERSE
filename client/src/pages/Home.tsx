@@ -74,149 +74,117 @@ export default function Home() {
       <div className="absolute bottom-10 left-1/3 w-[600px] h-[500px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none -z-10" />
 
       {/* ────────────────────────────────────────────────────────────────────── */}
-      {/* 1. HERO SECTION                                                        */}
+      {/* 1. HERO SECTION (FULLSCREEN BACKGROUND MATCHING REFERENCE DESIGN)      */}
       {/* ────────────────────────────────────────────────────────────────────── */}
-      <section className="relative pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-12 gap-8 items-center">
-          {/* Left Column: Headline, Subtitle, Search bar, Quick Filters */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Top Brand Pill */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 text-xs font-semibold"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span>PUNE URBAN INTELLIGENCE PLATFORM</span>
-            </motion.div>
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
+        {/* Fullscreen Panoramic Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/cityquest-hero-backdrop.jpg"
+            alt="CityQuest 3D Hero Backdrop"
+            className="w-full h-full object-cover object-right sm:object-center pointer-events-none select-none"
+          />
+          {/* Subtle gradient vignette on bottom to blend into the next section */}
+          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#060b17] via-[#060b17]/80 to-transparent pointer-events-none" />
+          {/* Subtle gradient vignette on top under navbar */}
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#060b17]/80 to-transparent pointer-events-none" />
+          {/* Soft ambient mobile readability overlay */}
+          <div className="absolute inset-0 bg-[#060b17]/50 lg:hidden pointer-events-none" />
+        </div>
 
-            {/* Giant Headline matching exact layout */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-5xl sm:text-6xl xl:text-7xl font-black leading-[1.05] tracking-tight text-white"
-            >
-              Your City.<br />
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-                Smarter.
-              </span><br />
-              Not Harder.
-            </motion.h1>
-
-            {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
-              className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed"
-            >
-              Discover the best places, explore rich history, stay safe, and make smarter choices with real-time city insights.
-            </motion.p>
-
-            {/* Search Pill Input Bar */}
-            <motion.form
-              onSubmit={handleSearch}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="p-1.5 rounded-full bg-[#0d182e]/90 border border-white/15 shadow-2xl shadow-black/80 flex items-center gap-2 max-w-xl backdrop-blur-xl"
-            >
-              {/* City selector dropdown */}
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/5 border border-white/5 text-xs font-semibold text-slate-200">
-                <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                <span>{selectedCity}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </div>
-
-              {/* Text Input */}
-              <input
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search places, food, landmarks, etc..."
-                className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-slate-500 px-2"
-              />
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/40 transition-transform active:scale-90"
+        {/* Foreground Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-28 pb-16">
+          <div className="grid lg:grid-cols-12 gap-8 items-center min-h-[70vh]">
+            {/* Left 7 Columns: Headline, Subtitle, Search bar, Quick Filters */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Giant Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-5xl sm:text-6xl xl:text-7xl font-black leading-[1.05] tracking-tight text-white drop-shadow-md"
               >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </motion.form>
+                Your City.<br />
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+                  Smarter.
+                </span><br />
+                Not Harder.
+              </motion.h1>
 
-            {/* 6 Quick Category Filter Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-wrap gap-2 pt-1"
-            >
-              {quickCategories.map(({ label, icon: Icon, bg, href }) => (
-                <Link
-                  key={label}
-                  to={href}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 hover:scale-105 ${bg}`}
+              {/* Subheadline */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+                className="text-slate-300 text-base sm:text-lg max-w-xl leading-relaxed drop-shadow"
+              >
+                Discover the best places, explore rich history, stay safe, and make smarter choices with real-time city insights.
+              </motion.p>
+
+              {/* Search Pill Input Bar */}
+              <motion.form
+                onSubmit={handleSearch}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="p-1.5 rounded-full bg-[#0d182e]/90 border border-white/15 shadow-2xl shadow-black/80 flex items-center gap-2 max-w-xl backdrop-blur-xl"
+              >
+                {/* City selector dropdown */}
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/5 border border-white/5 text-xs font-semibold text-slate-200">
+                  <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{selectedCity}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </div>
+
+                {/* Text Input */}
+                <input
+                  type="text"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search places, food, landmarks, etc..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-slate-400 px-2"
+                />
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/40 transition-transform active:scale-90"
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </motion.div>
-          </div>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </motion.form>
 
-          {/* Right Column: 3D Floating City Island with "Same City, New Perspective" */}
-          <div className="lg:col-span-5 relative flex items-center justify-center">
-            {/* Handwritten callout note */}
-            <div className="absolute -top-3 right-4 z-20 flex items-center gap-2 text-cyan-400 font-hand text-2xl tracking-wide rotate-6">
-              <span>Same City, New Perspective</span>
-              <span className="text-xl">↗</span>
+              {/* 6 Quick Category Filter Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap gap-2 pt-1"
+              >
+                {quickCategories.map(({ label, icon: Icon, bg, href }) => (
+                  <Link
+                    key={label}
+                    to={href}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-md transition-all duration-200 hover:scale-105 shadow-sm ${bg}`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{label}</span>
+                  </Link>
+                ))}
+              </motion.div>
             </div>
 
-            {/* 3D Display Frame */}
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className="relative w-full rounded-3xl overflow-hidden border border-cyan-500/25 shadow-2xl shadow-cyan-500/10 group"
-            >
-              {show3DScene ? (
-                /* Live Interactive Three.js Scene */
-                <div className="w-full h-[400px] sm:h-[460px] bg-[#050a17]">
-                  <HeroScene />
+            {/* Right 5 Columns: Floating Handwritten Note in open sky */}
+            <div className="lg:col-span-5 relative hidden lg:flex items-start justify-end h-full pt-6 pr-6">
+              <div className="text-right space-y-1">
+                <div className="text-cyan-300 font-hand text-3xl font-bold tracking-wide leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+                  Same City<br />New Perspective
                 </div>
-              ) : (
-                /* 3D Isometric Pune Island Render */
-                <div className="relative w-full h-[400px] sm:h-[460px] bg-gradient-to-b from-[#0c1933] to-[#040814] overflow-hidden">
-                  <img
-                    src="/pune-island.jpg"
-                    alt="Pune 3D Island"
-                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
-                  />
-                  {/* Floating Holographic Pune Pin Badge */}
-                  <div className="absolute top-1/4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-cyan-500/20 backdrop-blur-md border border-cyan-400 text-cyan-200 text-xs font-bold shadow-lg shadow-cyan-500/50 flex items-center gap-1.5 animate-bounce">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                    Pune
-                  </div>
+                <div className="text-cyan-300 text-3xl font-hand inline-block transform translate-x-2 rotate-45 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                  ⤷
                 </div>
-              )}
-
-              {/* Bottom bar inside island with WebGL toggle */}
-              <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-2xl glass-dark border border-white/10 flex items-center justify-between text-xs backdrop-blur-md">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-slate-300 font-medium">Shaniwar Wada Heritage Zone</span>
-                </div>
-                <button
-                  onClick={() => setShow3DScene(!show3DScene)}
-                  className="px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold hover:bg-cyan-500/25 transition-colors"
-                >
-                  {show3DScene ? 'Show Render' : 'Interactive 3D'}
-                </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
