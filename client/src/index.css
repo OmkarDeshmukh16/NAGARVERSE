@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../src";
 
 @theme {
   --color-void: #040814;
@@ -17,15 +18,14 @@
 
   --font-display: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --font-hand: "Caveat", cursive;
 
   --radius-glass: 16px;
   --blur-glass: 20px;
 }
 
-* {
+*, ::before, ::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html {
@@ -87,6 +87,10 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.font-hand {
+  font-family: "Caveat", cursive;
 }
 
 /* ── Animated gradient border ── */
