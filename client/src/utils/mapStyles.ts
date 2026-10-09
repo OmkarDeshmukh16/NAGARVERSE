@@ -1,32 +1,19 @@
 // Map styles configuration for MapLibre GL
-// CartoDB & OSM work out of the box with 0 API keys required!
+// 100% free with NO watermark and NO mandatory API key!
+
+// Optional user-supplied tokens from .env
+const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
+const cartoKey = import.meta.env.VITE_CARTO_API_KEY
+const customStyleEnv = import.meta.env.VITE_MAP_STYLE
+
 export const MAP_STYLES = {
-  // Sleek cyberpunk dark mode map (matches NAGARVERSE dark theme)
-  dark: {
-    version: 8,
-    sources: {
-      'carto-dark': {
-        type: 'raster',
-        tiles: [
-          'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        ],
-        tileSize: 256,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      },
-    },
-    layers: [
-      {
-        id: 'carto-dark-layer',
-        type: 'raster',
-        source: 'carto-dark',
-        minzoom: 0,
-        maxzoom: 20,
-      },
-    ],
-  },
+  // Sleek cyberpunk dark mode (Vector MapLibre style - NO watermark, crisp streets & labels)
+  dark: mapboxToken
+    ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11?access_token=${mapboxToken}`
+    : cartoKey
+    ? `https://tiles.basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json?api_key=${cartoKey}`
+    : 'https://tiles.basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+
 
   // Standard OpenStreetMap street view
   streets: {
