@@ -1,0 +1,22 @@
+{
+  "name": "nagarverse",
+  "version": "1.0.0",
+  "description": "NAGARVERSE — AI-Powered 3D City Exploration, Intelligence & Safety Platform for Pune",
+  "scripts": {
+    "dev:server": "cd server && npm start",
+    "dev:client": "cd client && npm run dev",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": [
+    "pune",
+    "smart-city",
+    "3d",
+    "threejs",
+    "maplibre",
+    "ai-tourism",
+    "urban-safety",
+    "digital-twin"
+  ],
+  "author": "Nagarverse Team",
+  "license": "MIT"
+}
