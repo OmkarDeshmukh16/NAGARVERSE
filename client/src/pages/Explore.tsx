@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import PlaceCard from '../components/ui/PlaceCard'
 import PlaceDetail from '../components/ui/PlaceDetail'
+import { MAP_STYLES, getDefaultMapStyle, MapStyleKey } from '../utils/mapStyles'
 
 const categories = [
   { id: 'all', label: 'All', icon: Map },
@@ -46,6 +47,8 @@ export default function Explore() {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])
 
+  const [currentMapStyle, setCurrentMapStyle] = useState<MapStyleKey>('dark')
+
   // Get user location
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -60,15 +63,22 @@ export default function Explore() {
     if (!mapContainerRef.current || mapRef.current) return
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: getDefaultMapStyle(),
       center: [73.8567, 18.5204],
       zoom: 12,
     })
-    map.addControl(new maplibregl.NavigationControl(), 'top-right')
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right')
     map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true }), 'top-right')
     mapRef.current = map
     return () => { map.remove(); mapRef.current = null }
   }, [])
+
+  const handleStyleChange = (styleKey: MapStyleKey) => {
+    setCurrentMapStyle(styleKey)
+    if (mapRef.current) {
+      mapRef.current.setStyle(MAP_STYLES[styleKey] as any)
+    }
+  }
 
   // Fetch places
   const { data: places, isLoading, isError } = useQuery({
@@ -116,7 +126,7 @@ export default function Explore() {
         .addTo(mapRef.current!)
       markersRef.current.push(marker)
     })
-  }, [places])
+  }, [places, currentMapStyle])
 
   // Fly to selected place
   useEffect(() => {
@@ -239,6 +249,43 @@ export default function Explore() {
         {viewMode !== 'list' && (
           <div className="flex-1 relative">
             <div ref={mapContainerRef} className="w-full h-full" />
+
+            {/* Map Style Switcher */}
+            <div className="absolute top-4 left-4 z-10 flex items-center bg-slate-900/85 backdrop-blur-md border border-white/10 rounded-xl p-1 shadow-2xl">
+              <button
+                type="button"
+                onClick={() => handleStyleChange('dark')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  currentMapStyle === 'dark'
+                    ? 'bg-primary text-white shadow-md shadow-primary/25'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                Dark Cyber
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStyleChange('streets')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  currentMapStyle === 'streets'
+                    ? 'bg-primary text-white shadow-md shadow-primary/25'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                Streets
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStyleChange('satellite')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  currentMapStyle === 'satellite'
+                    ? 'bg-primary text-white shadow-md shadow-primary/25'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                Satellite
+              </button>
+            </div>
 
             {/* Place detail overlay */}
             <AnimatePresence>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import SafeRoutePanel from '../components/safety/SafeRoutePanel'
 import ReportIncident from '../components/safety/ReportIncident'
+import { getDefaultMapStyle } from '../utils/mapStyles'
 
 const severities = ['all', 'low', 'medium', 'high', 'critical']
 const incidentCategories = [
@@ -50,7 +51,7 @@ export default function Safety() {
     if (!mapContainerRef.current || mapRef.current) return
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: getDefaultMapStyle(),
       center: [73.8567, 18.5204],
       zoom: 12,
     })
