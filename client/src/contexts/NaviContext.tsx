@@ -17,7 +17,14 @@ export interface NaviMessage {
   content: string
   timestamp: Date
   places?: any[]
-  mapAction?: { lat: number; lng: number; label: string }
+  mapAction?: { lat: number; lng: number; label: string; placeId?: string }
+  isDemo?: boolean
+  degradedMode?: boolean
+  grounding?: {
+    placesRetrieved?: number
+    weatherSource?: string
+    activeReports?: number
+  }
 }
 
 const NaviContext = createContext<NaviContextType | null>(null)
@@ -67,6 +74,9 @@ export function NaviProvider({ children }: { children: ReactNode }) {
           timestamp: new Date(),
           places: data.places,
           mapAction: data.mapAction,
+          isDemo: data.isDemo,
+          degradedMode: data.degradedMode,
+          grounding: data.grounding,
         },
       ])
     } catch {

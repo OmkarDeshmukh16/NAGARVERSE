@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Mic, MicOff, Sparkles, MapPin, ArrowUpRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, Send, Mic, MicOff, Sparkles, MapPin, ArrowUpRight, Compass, Info, Star, ShieldAlert, Cloud } from 'lucide-react'
 import { useNavi } from '../../contexts/NaviContext'
+import PlaceDetail from '../ui/PlaceDetail'
 
 // Simple markdown renderer without the package
 function SimpleMarkdown({ text }: { text: string }) {
@@ -21,8 +23,10 @@ function SimpleMarkdown({ text }: { text: string }) {
 }
 
 export default function NaviOrb() {
+  const navigate = useNavigate()
   const { isOpen, isListening, isProcessing, messages, openNavi, closeNavi, sendMessage, setListening } = useNavi()
   const [input, setInput] = useState('')
+  const [selectedDetailPlace, setSelectedDetailPlace] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
 
@@ -176,16 +180,104 @@ export default function NaviOrb() {
                   >
                     <SimpleMarkdown text={msg.content} />
 
-                    {/* Place cards */}
+                    {/* Grounding & Source status badge */}
+                    {msg.role === 'assistant' && (msg.grounding || msg.isDemo || msg.degradedMode) && (
+                      <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        {msg.degradedMode ? (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
+                            Local Grounding Heuristics
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">
+                            Grounded · Verified Services
+                          </span>
+                        )}
+                        {msg.grounding?.activeReports !== undefined && (
+                          <span className="text-slate-400">
+                            · {msg.grounding.activeReports} citizen reports checked
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Grounded Place Cards */}
                     {msg.places && msg.places.length > 0 && (
-                      <div className="mt-2 space-y-1.5">
-                        {msg.places.slice(0, 3).map((p: any, i: number) => (
-                          <div key={i} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
-                            <MapPin className="w-3 h-3 text-cyan-400 flex-shrink-0" />
-                            <span className="text-xs text-slate-300 flex-1 truncate">{p.name}</span>
-                            <ArrowUpRight className="w-3 h-3 text-slate-600" />
-                          </div>
-                        ))}
+                      <div className="mt-2.5 space-y-2">
+                        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                          Recommended Places ({msg.places.length})
+                        </div>
+                        {msg.places.slice(0, 4).map((p: any, i: number) => {
+                          const coords = p.location?.coordinates || [73.8567, 18.5204]
+                          const [lng, lat] = coords
+                          return (
+                            <div
+                              key={i}
+                              className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-2.5 transition-all flex flex-col gap-1.5"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-white text-xs truncate">{p.name}</span>
+                                    {p.category && (
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 capitalize flex-shrink-0">
+                                        {p.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {p.address && (
+                                    <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                                      {p.address}
+                                    </div>
+                                  )}
+                                </div>
+                                {p.rating && (
+                                  <div className="flex items-center gap-0.5 text-[11px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                    <Star className="w-3 h-3 fill-amber-400" />
+                                    <span>{p.rating}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigate(`/explore?lat=${lat}&lng=${lng}&placeId=${p._id}&q=${encodeURIComponent(p.name)}`)
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1 text-[11px] py-1 px-2 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 font-medium transition-colors"
+                                >
+                                  <Compass className="w-3 h-3" />
+                                  <span>View on Map</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedDetailPlace(p)}
+                                  className="flex items-center justify-center gap-1 text-[11px] py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
+                                >
+                                  <Info className="w-3 h-3" />
+                                  <span>Details</span>
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Primary Map Action button */}
+                    {msg.mapAction && (
+                      <div className="mt-2 pt-2 border-t border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigate(`/explore?lat=${msg.mapAction!.lat}&lng=${msg.mapAction!.lng}&placeId=${msg.mapAction!.placeId || ''}&q=${encodeURIComponent(msg.mapAction!.label)}`)
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-gradient-to-r from-violet-600/30 to-cyan-600/30 border border-cyan-500/30 hover:border-cyan-500/60 text-xs text-cyan-200 font-medium transition-all"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Explore {msg.mapAction.label} on Map ↗</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -263,6 +355,25 @@ export default function NaviOrb() {
               </motion.button>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Place Detail Modal for inspecting recommended places directly */}
+      <AnimatePresence>
+        {selectedDetailPlace && (
+          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md max-h-[85vh] overflow-y-auto"
+            >
+              <PlaceDetail
+                place={selectedDetailPlace}
+                onClose={() => setSelectedDetailPlace(null)}
+              />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

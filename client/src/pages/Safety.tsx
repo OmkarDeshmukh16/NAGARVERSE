@@ -203,66 +203,96 @@ export default function Safety() {
         <div className="w-full lg:w-[360px] flex-shrink-0 overflow-y-auto border-r border-white/5 bg-[#060d1f]/80">
           {activeTab === 'map' && (
             <div className="p-3 space-y-2">
-              {/* Notice */}
-              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-400 flex gap-2">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  Data sourced from community reports. "Lower reported risk" does not guarantee safety. Always exercise judgment.
+              {/* Prominent Caution Notice */}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 font-semibold text-amber-200">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <span>Important Safety & Coverage Notice</span>
+                </div>
+                <div className="text-[11px] leading-relaxed text-amber-300/90">
+                  Data is sourced exclusively from citizen incident submissions. <strong>Absence of reports in an area does NOT indicate safety</strong>; it often indicates unmonitored infrastructure or a lack of community reporters.
                 </div>
               </div>
 
-              {/* Incidents */}
+              {/* Incidents List */}
               {incidents.length === 0 ? (
-                <div className="py-8 text-center text-slate-600">
-                  <Shield className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No incidents match your filters</p>
+                <div className="py-8 text-center text-slate-500">
+                  <Shield className="w-8 h-8 mx-auto mb-2 opacity-30 text-cyan-400" />
+                  <p className="text-sm font-medium text-slate-300">No active incidents match your filters</p>
+                  <p className="text-xs text-slate-500 mt-1">Reminder: 0 reports does not guarantee zero risk.</p>
                 </div>
-              ) : incidents.map((inc: any) => (
-                <motion.div
-                  key={inc._id}
-                  whileHover={{ x: 2 }}
-                  onClick={() => setSelectedIncident(inc)}
-                  className={`p-3 rounded-xl cursor-pointer border transition-all ${
-                    selectedIncident?._id === inc._id
-                      ? 'border-rose-500/30 bg-rose-500/5'
-                      : 'border-white/5 hover:border-white/10'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                      style={{ background: severityColors[inc.severity] || '#94a3b8' }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white capitalize">{inc.category?.replace('_', ' ')}</span>
-                        <span
-                          className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize"
-                          style={{
-                            background: `${severityColors[inc.severity] || '#94a3b8'}20`,
-                            color: severityColors[inc.severity] || '#94a3b8',
-                          }}
-                        >
-                          {inc.severity}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{inc.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-slate-700 flex items-center gap-0.5">
-                          <Clock className="w-2.5 h-2.5" /> {new Date(inc.createdAt).toLocaleDateString()}
-                        </span>
-                        <span className={`text-[10px] ${
-                          inc.verificationStatus === 'verified' ? 'text-emerald-500'
-                          : inc.verificationStatus === 'under_review' ? 'text-amber-500'
-                          : 'text-slate-600'
-                        }`}>
-                          {inc.verificationStatus?.replace('_', ' ')}
-                        </span>
+              ) : incidents.map((inc: any) => {
+                const createdDate = new Date(inc.createdAt)
+                const ageHours = Math.round((Date.now() - createdDate.getTime()) / (1000 * 3600))
+                const timeText = ageHours < 1 ? 'Just now' : ageHours < 24 ? `${ageHours}h ago` : `${Math.round(ageHours / 24)}d ago`
+
+                return (
+                  <motion.div
+                    key={inc._id}
+                    whileHover={{ x: 2 }}
+                    onClick={() => setSelectedIncident(inc)}
+                    className={`p-3 rounded-xl cursor-pointer border transition-all ${
+                      selectedIncident?._id === inc._id
+                        ? 'border-rose-500/40 bg-rose-500/10 shadow-lg shadow-rose-500/5'
+                        : 'border-white/5 hover:border-white/10 bg-white/2'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                        style={{ background: severityColors[inc.severity] || '#94a3b8' }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="text-xs font-semibold text-white capitalize truncate">
+                            {inc.category?.replace('_', ' ')}
+                          </span>
+                          <span
+                            className="text-[10px] px-1.5 py-0.2 rounded font-medium capitalize flex-shrink-0"
+                            style={{
+                              background: `${severityColors[inc.severity] || '#94a3b8'}20`,
+                              color: severityColors[inc.severity] || '#94a3b8',
+                            }}
+                          >
+                            {inc.severity}
+                          </span>
+                        </div>
+
+                        {inc.locationName && (
+                          <div className="text-[11px] font-medium text-slate-300 truncate flex items-center gap-1 mb-0.5">
+                            <MapPin className="w-2.5 h-2.5 text-cyan-400 flex-shrink-0" />
+                            <span>{inc.locationName}</span>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">{inc.description}</p>
+
+                        <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-white/5 text-[10px]">
+                          <span className="text-slate-400 flex items-center gap-1" title={createdDate.toLocaleString()}>
+                            <Clock className="w-3 h-3 text-slate-500" />
+                            <span>{timeText}</span>
+                            <span className="text-slate-600">({createdDate.toLocaleDateString()})</span>
+                          </span>
+
+                          {inc.verificationStatus === 'verified' ? (
+                            <span className="px-1.5 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                              <CheckCircle className="w-2.5 h-2.5" /> Verified
+                            </span>
+                          ) : inc.verificationStatus === 'under_review' ? (
+                            <span className="px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                              <AlertCircle className="w-2.5 h-2.5" /> Under Review
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                              Resolved
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                )
+              })}
 
               {/* Emergency contacts */}
               <div className="mt-4 pt-4 border-t border-white/5">

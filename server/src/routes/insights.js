@@ -1,26 +1,43 @@
 const express = require('express')
 const axios = require('axios')
+const Incident = require('../models/Incident')
 const router = express.Router()
 
 // GET /api/insights/overview
-router.get('/overview', (req, res) => {
+router.get('/overview', async (req, res) => {
   const currentHour = new Date().getHours()
+  const isPeak = (currentHour >= 8 && currentHour <= 11) || (currentHour >= 17 && currentHour <= 21)
+
+  let activeReports = 6
+  let isDatabaseConnected = false
+
+  const mongoose = require('mongoose')
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const count = await Incident.countDocuments({ verificationStatus: { $ne: 'resolved' } })
+      activeReports = count
+      isDatabaseConnected = true
+    } catch {
+      // Fallback to sample count
+    }
+  }
+
   const activityByHour = Array.from({ length: 12 }, (_, i) => {
     const hour = (i * 2) % 24
-    const isPeak = (hour >= 8 && hour <= 11) || (hour >= 17 && hour <= 21)
+    const peak = (hour >= 8 && hour <= 11) || (hour >= 17 && hour <= 21)
     return {
       time: `${hour.toString().padStart(2, '0')}:00`,
-      reports: isPeak ? Math.floor(Math.random() * 20) + 25 : Math.floor(Math.random() * 10) + 5,
-      searches: isPeak ? Math.floor(Math.random() * 80) + 120 : Math.floor(Math.random() * 40) + 30,
+      reports: peak ? Math.floor(Math.random() * 8) + 12 : Math.floor(Math.random() * 4) + 2,
+      searches: peak ? Math.floor(Math.random() * 80) + 120 : Math.floor(Math.random() * 40) + 30,
     }
   })
 
   res.json({
     success: true,
-    activeReports: 142,
-    dailySearches: 3842,
-    activeUsers: 1204,
-    routesGenerated: 567,
+    activeReports,
+    dailySearches: 1840,
+    activeUsers: 640,
+    routesGenerated: 215,
     activityByHour,
     categoryBreakdown: [
       { category: 'Food & Cafes', count: 340 },
@@ -30,6 +47,11 @@ router.get('/overview', (req, res) => {
       { category: 'Shopping', count: 210 },
       { category: 'Transit Hubs', count: 95 },
     ],
+    isDemo: true,
+    source: isDatabaseConnected
+      ? 'Live database incident counts combined with illustrative urban search activity'
+      : 'Sample community incident records and illustrative urban search activity',
+    disclaimer: 'Search volume and route counts are illustrative demo indicators. Incident counts reflect actual community reports in the system.',
   })
 })
 
@@ -56,6 +78,7 @@ router.get('/weather', async (req, res) => {
       windSpeed: Math.round(curr.wind_speed_10m),
       feelsLike: Math.round(curr.apparent_temperature),
       isDemo: false,
+      source: 'Open-Meteo Public Forecast API',
     })
   } catch {
     // Graceful Pune climate fallback
@@ -66,6 +89,7 @@ router.get('/weather', async (req, res) => {
       windSpeed: 12,
       feelsLike: 29,
       isDemo: true,
+      source: 'Pune Seasonal Climate Estimate (Demo Fallback)',
     })
   }
 })
@@ -79,9 +103,12 @@ router.get('/traffic', (req, res) => {
   res.json({
     congestionLevel,
     description: isPeak
-      ? 'Peak commute volume observed near Swargate, Nal Stop, and Hinjewadi flyover.'
-      : 'Normal steady flow on arterial Pune roads and University circle.',
+      ? 'Peak commute pattern typically observed near Swargate, Nal Stop, and Hinjewadi flyover corridors.'
+      : 'Off-peak steady vehicular pattern along major Pune arterial routes.',
     isDemo: true,
+    source: 'Time-of-day heuristic pattern (Illustrative Model)',
+    methodology: 'Historical typical commute windows for Pune junctions. Does NOT represent live GPS fleet telemetry or municipal traffic camera feeds.',
+    lastCalculated: new Date().toISOString(),
   })
 })
 

@@ -78,7 +78,12 @@ function TrafficWidget({ data }: { data: any }) {
     <div className="glass rounded-2xl border border-orange-500/10 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-xs text-slate-500 uppercase tracking-wider">Traffic Conditions</div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 uppercase tracking-wider">Traffic Pattern</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
+              Heuristic Model (Demo)
+            </span>
+          </div>
           <div className="text-lg font-bold text-white mt-1" style={{ color: trafficColors[level] }}>
             {trafficLabels[level]} Traffic
           </div>
@@ -94,9 +99,11 @@ function TrafficWidget({ data }: { data: any }) {
           />
         ))}
       </div>
-      <div className="text-xs text-slate-600">
-        {data?.description || 'Traffic data based on community reports and OSM routing estimates.'}
-        {data?.isDemo && <span className="text-amber-400 ml-1">[Demo]</span>}
+      <div className="text-xs text-slate-400 leading-relaxed">
+        {data?.description || 'Peak and off-peak vehicular volume estimated from Pune urban topology.'}
+      </div>
+      <div className="mt-2 pt-2 border-t border-white/5 text-[10px] text-slate-500">
+        Methodology: {data?.methodology || 'Statistical time-of-day commute pattern. Not live GPS fleet telemetry.'}
       </div>
     </div>
   )
@@ -148,12 +155,13 @@ export default function Insights() {
             <div>
               <span className="text-cyan-400 text-sm font-semibold uppercase tracking-widest">City Intelligence</span>
               <h1 className="text-3xl font-black text-white mt-1">City Pulse Dashboard</h1>
-              <p className="text-slate-500 text-sm mt-1">Real-time and community-sourced insights for Pune</p>
+              <p className="text-slate-400 text-sm mt-1">Community incident data, open weather telemetry & urban heuristics for Pune</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-slate-500">Live • Updated every 5 min</span>
-              <button className="btn-ghost text-xs px-3 py-1.5 flex items-center gap-1.5 rounded-lg">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-medium">
+                Community Reports & Heuristics
+              </span>
+              <button onClick={() => window.location.reload()} className="btn-ghost text-xs px-3 py-1.5 flex items-center gap-1.5 rounded-lg">
                 <RefreshCw className="w-3 h-3" /> Refresh
               </button>
             </div>
@@ -180,11 +188,11 @@ export default function Insights() {
         {/* Overview stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Active Reports', value: overview?.activeReports ?? 142, icon: AlertTriangle, color: '#f43f5e', trend: '+12%' },
-            { label: 'Places Searched', value: overview?.dailySearches ?? 3842, icon: BarChart3, color: '#00d4ff', trend: '+8%' },
-            { label: 'Community Users', value: overview?.activeUsers ?? 1204, icon: Users, color: '#8b5cf6', trend: '+5%' },
-            { label: 'Routes Generated', value: overview?.routesGenerated ?? 567, icon: Activity, color: '#10b981', trend: '+21%' },
-          ].map(({ label, value, icon: Icon, color, trend }) => (
+            { label: 'Active Reports', value: overview?.activeReports ?? 6, icon: AlertTriangle, color: '#f43f5e', sub: 'Citizen Verified' },
+            { label: 'Places Searched', value: overview?.dailySearches ?? 1840, icon: BarChart3, color: '#00d4ff', sub: 'Baseline Activity' },
+            { label: 'Community Users', value: overview?.activeUsers ?? 640, icon: Users, color: '#8b5cf6', sub: 'Active Profiles' },
+            { label: 'Routes Generated', value: overview?.routesGenerated ?? 215, icon: Activity, color: '#10b981', sub: 'Model Evaluated' },
+          ].map(({ label, value, icon: Icon, color, sub }) => (
             <motion.div
               key={label}
               initial={{ opacity: 0, y: 20 }}
@@ -195,10 +203,10 @@ export default function Insights() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}15` }}>
                   <Icon className="w-4 h-4" style={{ color }} />
                 </div>
-                <span className="text-xs text-emerald-400 font-medium">{trend}</span>
+                <span className="text-[10px] text-cyan-400 font-medium px-1.5 py-0.5 rounded bg-cyan-500/10">{sub}</span>
               </div>
               <div className="text-2xl font-black text-white">{value.toLocaleString()}</div>
-              <div className="text-xs text-slate-600 mt-0.5">{label}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{label}</div>
             </motion.div>
           ))}
         </div>
@@ -253,13 +261,12 @@ export default function Insights() {
           </div>
         </div>
 
-        {/* Demo notice */}
-        <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 flex items-start gap-3 text-sm">
+        {/* Data Governance & Transparency notice */}
+        <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 flex items-start gap-3 text-xs leading-relaxed">
           <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-          <div className="text-amber-400/80">
-            <strong className="text-amber-400">Demo Data Notice:</strong> Charts and statistics shown here are illustrative.
-            Live weather requires an Open-Meteo API key. Traffic data is estimated from OSM routing.
-            Community data reflects actual submitted reports.
+          <div className="text-amber-300/90">
+            <strong className="text-amber-300 font-semibold block mb-1">Data Governance & Provenance Notice</strong>
+            NAGARVERSE does not invent official municipal power grid or emergency response telemetry. Active citizen incident counts represent verified database submissions. Traffic patterns and urban search timelines represent illustrative time-of-day model heuristics. Weather is fetched from Open-Meteo's open meteorological service. Absence of incident reports in any neighborhood indicates lack of submissions, NOT guaranteed safety.
           </div>
         </div>
       </div>

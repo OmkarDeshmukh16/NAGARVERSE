@@ -283,5 +283,7 @@ router.post('/:id/vote', async (req, res) => {
   res.json({ success: true, upvotes: 1 })
 })
 
+router.COMMUNITY_REPORTS = COMMUNITY_REPORTS
+
 module.exports = router
 

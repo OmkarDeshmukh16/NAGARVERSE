@@ -133,6 +133,34 @@ export default function Explore() {
     mapRef.current.flyTo({ center: [lng, lat], zoom: 15, duration: 1200 })
   }, [selectedPlace])
 
+  // Select place from URL parameters (e.g. from Navi assistant recommendations)
+  useEffect(() => {
+    const pId = searchParams.get('placeId')
+    const latParam = parseFloat(searchParams.get('lat') || '')
+    const lngParam = parseFloat(searchParams.get('lng') || '')
+
+    if (pId) {
+      if (places && places.length > 0) {
+        const found = places.find((p: any) => p._id === pId || p.osmId === pId)
+        if (found) {
+          setSelectedPlace(found)
+          return
+        }
+      }
+      axios.get(`/api/places/${pId}`).then(res => {
+        if (res.data?.place) {
+          setSelectedPlace(res.data.place)
+        }
+      }).catch(() => {
+        if (!isNaN(latParam) && !isNaN(lngParam) && mapRef.current) {
+          mapRef.current.flyTo({ center: [lngParam, latParam], zoom: 15, duration: 1200 })
+        }
+      })
+    } else if (!isNaN(latParam) && !isNaN(lngParam) && mapRef.current) {
+      mapRef.current.flyTo({ center: [lngParam, latParam], zoom: 15, duration: 1200 })
+    }
+  }, [searchParams, places])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setQuery(inputQuery)
